@@ -1,0 +1,2929 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+
+
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CL_Dial Light – Alles in einem</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://unpkg.com/sip.js@0.20.0/lib/sip.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 1600%; margin: auto; padding: 20px; background-color: #f9f9f9; }
+    h1 { color: #8c1aff; text-align: center; }
+    nav { text-align: center; margin-bottom: 20px; }
+    nav button { margin: 0 5px; padding: 8px 16px; border: none; border-radius: 6px; background-color: #ddd; cursor: pointer; }
+    nav button.active { background-color: #8c1aff; color: white; font-weight: bold; }
+    section { display: none; }
+    section.active { display: block; }
+    .lead-card, .upload-box, .report-table, .admin-panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; }
+    .button { margin-top: 15px; padding: 10px 15px; background-color: #8c1aff; color: white; border: none; cursor: pointer; border-radius: 6px; }
+    .kachel-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .kachel { flex: 1 1 calc(33% - 10px); background: #f0f0ff; padding: 10px; border-radius: 8px; box-shadow: inset 0 0 4px rgba(0,0,0,0.05); }
+    .actions { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 400px; }
+    .call-buttons { display: flex; gap: 10px; align-items: center; margin-top: 5px; }
+    .call-button { padding: 6px 10px; border: none; border-radius: 6px; color: white; cursor: pointer; }
+    .call-button.green { background-color: green; }
+    .call-button.red { background-color: red; }
+
+.phone-box {
+  background-color: #f0f0ff;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.phone-box:hover {
+  background-color: inherit;
+}
+
+.phone-box.selected {
+  border: 2px solid #8c1aff;
+}
+
+.call-action {
+  margin-top: 10px;
+  padding: 10px 16px;
+  background-color: green;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.call-action:hover {
+   background-color: #b2f0c0; /* sanftes grün */
+  color: #1a472a;
+}
+
+
+
+#callButton, #muteButton, #hangupButton {
+  transition: none;
+}
+
+/* Keine Effekte beim Hover */
+#callButton:hover,
+#muteButton:hover,
+#hangupButton:hover {
+  background-color: inherit;
+  color: inherit;
+  transform: none;
+  filter: none;
+}
+
+
+
+@media (max-width: 768px) {
+  #contactListModal {
+    flex-direction: column !important;
+    height: auto !important;
+    max-height: 90vh;
+  }
+
+  #kontaktDetailBlock {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    margin-top: 20px;
+  }
+
+  #contactListModal table {
+    font-size: 12px;
+    overflow-x: auto;
+    display: block;
+  }
+
+  #contactListModal thead,
+  #contactListModal tbody,
+  #contactListModal tr,
+  #contactListModal td,
+  #contactListModal th {
+    display: block;
+  }
+
+  #contactListModal tr {
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  #contactListModal td,
+  #contactListModal th {
+    text-align: left !important;
+    padding: 4px 8px;
+  }
+}
+
+
+#kontaktDetailBlock table td,
+#kontaktDetailBlock table th {
+  padding: 4px 8px;
+  text-align: left;
+}
+
+
+.field-box { cursor: move; }
+.field-box.dragging { opacity: 0.5; }
+#leadFieldsPreview .dual-column {
+  display: flex;
+  gap: 20px;
+}
+#leadFieldsPreview .column-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+.dual-column {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.column-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.field-box {
+  background: #f0f0ff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.05);
+}
+.label {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+
+.button-purple {
+  background-color: #8c1aff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s ease;
+}
+.button-purple:hover {
+  background-color: #a03dff;
+}
+
+    .history { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 14px; }
+    .admin-toggle { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+    .admin-toggle button { flex: 1; padding: 10px; border: none; border-radius: 8px; background-color: #eee; cursor: pointer; font-weight: bold; }
+    .admin-toggle button.active { background-color: #8c1aff; color: white; }
+    .visibility-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    background-color: white;
+}
+
+.visibility-row:hover {
+    background-color: #eae2ff;
+    box-shadow: 0 0 5px rgba(140, 26, 255, 0.4);
+    cursor: pointer;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  position: absolute;
+  background-color: white;
+  min-width: 160px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  z-index: 9999;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  right: 0; /* sorgt dafür, dass das Menü rechtsbündig erscheint */
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 10px 12px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content a:hover {
+  background-color: #f0f0ff;
+}
+
+
+.button-deactivate {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.button-deactivate:hover {
+  background-color: #ddd;
+}
+
+.settings-button {
+  background-color: #8c1aff;
+  color: white;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s ease;
+}
+
+.settings-button:hover {
+  background-color: #a03dff;
+}
+
+
+
+
+/* ✨ Vereinheitlichte Buttons */
+button, .button {
+  border-radius: 10px !important;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+  padding: 10px 16px;
+}
+
+
+input:focus, textarea:focus, select:focus {
+  border: 2px solid #8c1aff;
+  box-shadow: 0 0 6px rgba(140, 26, 255, 0.3);
+  outline: none;
+}
+
+/* 💬 Status-Bereich luftiger */
+#leadFields .field-box select,
+#leadFields .field-box textarea {taxt-align: right;
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 100%;
+  resize: vertical;
+}
+
+/* 🎨 Optimierte Callbar */
+#callBarTable {
+  background-color: #f5eaff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(140, 26, 255, 0.1);
+}
+
+/* 📱 Responsive Anpassung */
+@media (max-width: 768px) {
+  .dual-column {
+    flex-direction: column;
+  }
+
+  #callBarTable td {
+    display: block;
+    width: 100%;
+  }
+
+  #callBarTable td:last-child {
+    text-align: left;
+    padding-top: 10px;
+  }
+}
+
+/* ☎️ Anruf-Button schicker */
+.call-button.green {
+  background: linear-gradient(to right, #4caf50, #81c784);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* ❌ Auflegen-Button leicht abgerundet */
+#hangupButton {
+  background-color: red !important;
+  border-radius: 8px;
+}
+
+
+
+
+  </style>
+</head>
+
+<body onload="checkLogin()">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <img id="headerLogo" src="" alt="Logo" style="height: 60px; display: block;">
+    <h1 style="margin: 0; font-size: 2rem; color: #8c1aff;"></h1>
+  </div>
+  <div id="logoutWrapper" style="display: none;">
+    <span id="loggedInUser" style="margin-right: 10px;"></span>
+    <button onclick="logout()" style="padding: 8px 12px; border: none; background-color: #8c1aff; color: white; border-radius: 6px; cursor: pointer;">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- Login Modal -->
+<div id="loginModal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+  <div style="background: white; padding: 30px; border-radius: 12px; width: 350px;">
+    <h3>🔐 Login</h3>
+    
+    <label for="loginUsername" style="display: none;">Benutzername</label>
+    <input id="loginUsername" name="username" placeholder="Benutzername" autocomplete="username" style="width: 100%; margin-bottom: 10px; padding: 8px;">
+
+    <label for="loginPassword" style="display: none;">Passwort</label>
+    <input type="password" id="loginPassword" name="password" placeholder="Passwort" autocomplete="current-password" style="width: 100%; margin-bottom: 10px; padding: 8px;">
+    
+    <button class="button" onclick="login()">Login</button>
+  </div>
+</div>
+
+
+<nav id="mainNav" style="display: none;">
+  <button onclick="switchView('dialer')" class="active">Dialer</button>
+  <button onclick="switchView('import')">Datenmanagement</button>
+  <button onclick="switchView('report')">Reporting</button>
+  <button onclick="switchView('admin')">Admin</button>
+  
+</nav>
+
+
+
+<section id="dialer" class="active">
+  <div class="lead-card">
+
+    <!-- Obere Call-Bar -->
+<!-- Neue Call-Bar als Tabelle -->
+<table id="callBarTable" style="width: 100%; background-color: #f0f0ff; margin-bottom: 20px; border-radius: 12px; overflow: visible;position: relative; z-index:10;">
+  <tbody id="callBarBody">
+    <tr>
+      <td style="padding: 10px;">
+        <div style="font-size: 1.2em; font-weight: bold;">
+          <span id="anrede"></span> <span id="titel"></span> <span id="name"></span> <span id="firma"></span>
+        </div>
+        <div id="adresse" style="margin-top: 5px; color: #555;"></div>
+      </td>
+     <td style="padding: 10px; vertical-align: middle;">
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+    
+    <!-- 🟣 Mittig zentrierte Rufnummer -->
+    <div style="flex: 1; display: flex; justify-content: center;">
+      <div class="dropdown" style="position: relative;">
+        <button id="selectedNumberButton" style="padding: 12px 85px; font-size: 1.1em; background-color: #8c1aff; color: white; border: none; border-radius: 8px; cursor: pointer;">
+          06622 92430
+        </button>
+        <div id="phoneDropdown" class="dropdown-content" style="
+          display: none;
+          position: absolute;
+          top: 110%;
+          right: 0;
+          background: white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          border-radius: 6px;
+          z-index: 1000;
+          min-width: 220px;
+          max-width: none;
+          white-space: nowrap;
+          overflow-x: visible;">
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔴 Rechte Seite: Buttons größer & mittig -->
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <button id="callButton" onclick="callSelectedNumber()" style="padding: 12px 20px; font-size: 1.1em; background-color: green; color: white; border: none; border-radius: 6px; cursor: pointer;"> Anrufen</button>
+      <button id="muteButton" onclick="toggleMute()" style="padding: 12px 20px; font-size: 1.1em; background-color: #8c1aff; color: white; border: none; border-radius: 6px; cursor: pointer;">🎙️</button>
+      <button id="hangupButton" onclick="hangUp()" style="padding: 12px 20px; font-size: 1.1em; background-color: red; color: white; border: none; border-radius: 6px; cursor: pointer;"> Auflegen</button>
+    </div>
+
+  </div>
+</td>
+
+
+    </tr>
+  </tbody>
+</table>
+
+
+
+
+<!-- Lead Daten -->
+<div id="leadFields">
+  <div class="dual-column">
+    <div class="column-group" id="leftFieldsContainer">
+      <h4>📌 Stammdaten</h4>
+    </div>
+
+    <div class="column-group" id="rightFieldsContainer">
+      <h4>🛠️ Projekt-Stammdaten</h4>
+    </div>
+
+    <div class="column-group" id="statusFieldsContainer">
+      <h4>📄 Status</h4>
+
+      <div class="field-box">
+        <label class="label">Status</label>
+        <select id="leadStatus" onchange="toggleReminderVisibility(); handleStatusChange();">
+          <option>Neu</option>
+          <option>Anrufbeantworter</option>
+          <option>Keine Antwort</option>
+          <option>Nicht erreicht</option>
+          <option>Kein Interesse</option>
+          <option>Verkauf</option>
+          <option>Allgemeine Wiedervorlage</option>
+          <option>Persönliche Wiedervorlage</option>
+          <option>Besetzt</option>
+          <option>Fax</option>
+          <option>Negativ</option>
+          <option>Positiv</option>
+        </select>
+      </div>
+
+      <div id="reminderBlock" class="field-box" style="display: none;">
+        <label class="label">Wiedervorlage</label>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+  <input type="date" id="reminderDate" onchange="handleStatusChange()">
+  <div style="display: flex; gap: 5px;">
+    <button class="button" style="padding: 5px 10px;" onclick="setReminderInDays(1)">+1 Tag</button>
+    <button class="button" style="padding: 5px 10px;" onclick="setReminderInDays(3)">+3 Tage</button>
+    <button class="button" style="padding: 5px 10px;" onclick="setReminderInDays(7)">+7 Tage</button>
+  </div>
+</div>
+
+
+      <div class="field-box">
+        <label class="label">Gesprächsnotiz</label>
+        <textarea id="notes" oninput="handleStatusChange()" style="height: 100px;"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    
+  </div>
+ <!-- Neuer Footer-Button-Bereich mit Timer -->
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 30px;">
+  <button class="button" onclick="goBack()">⬅ Zurück</button>
+  <button class="button" onclick="document.getElementById('newLeadModal').style.display='block'">➕ Neuer Lead</button>
+  <button class="button" onclick="saveAndNextLead()">➡ Nächster Lead</button>
+
+  <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+    <div id="callTimer" style="font-size: 0.9em; color: #555;">
+      ⏱️ Gesprächszeit: <span id="callDuration">00:00</span>
+    </div>
+    <button onclick="openSearchPopup()" style="padding: 10px 20px; background-color: #8c1aff; color: white; border: none; border-radius: 10px; cursor: pointer;">
+      🔎 Lead suchen
+    </button>
+  </div>
+</div>
+
+
+
+
+</div>
+
+</section>
+
+<section id="import"><button class="button" onclick="openContactListManager()">📂 Kontaktlisten verwalten</button>
+<button class="button" onclick="openBulkStatusModal()">👥 Kontakte verwalten</button>
+<button class="button" onclick="exportData()" style="margin-left:auto;">📤 Daten exportieren</button>
+
+
+
+
+  <div class="upload-box">
+    <h2>Datei Importieren</h2>
+    <input type="file" id="fileInput">
+    <div id="importPreview"></div>
+  </div>
+</section>
+
+<section id="report">
+  <div class="report-table">
+    <h2>Reporting</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Status</th><th>Letzter Kontakt</th></tr></thead>
+      <tbody id="reportData"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ✨ ERSETZE DEINE <section id="admin"> ... </section> KOMPLETT HIERMIT -->
+<section id="admin">
+  <div class="admin-panel">
+    <div class="admin-toggle">
+      <button onclick="showAdminTab('visibility')" class="active">Sichtbarkeit</button>
+      <button onclick="showAdminTab('layout')">Layout bearbeiten</button>
+      <button onclick="showAdminTab('preview')">Vorschau</button>
+      <button onclick="showAdminTab('branding')">Logo & Branding</button>
+      <button onclick="showAdminTab('users')">Benutzerverwaltung</button>
+    </div>
+
+    <!-- Sichtbarkeit -->
+    <div id="admin-visibility">
+      <h3>Felder ein-/ausblenden</h3>
+      <div id="fieldVisibilityList"></div>
+      <div class="admin-tab-save">
+        <button class="button" onclick="saveFieldVisibility()">Speichern</button>
+      </div>
+    </div>
+
+    <!-- Layout -->
+    <div id="admin-layout" style="display:none">
+      <h3>Feldsortierung (Drag & Drop)</h3>
+      <ul id="fieldOrder" class="sort-settings"></ul>
+      <div class="admin-tab-save">
+        <button class="button" onclick="saveFieldVisibility()">Speichern</button>
+      </div>
+    </div>
+
+    <!-- Vorschau -->
+    <div id="admin-preview" style="display:none">
+      <h3>Live Vorschau (Drag & Drop möglich)</h3>
+      <div class="dual-column" id="leadFieldsPreview">
+        <div class="column-group" id="preview-stammdaten">
+          <h4>🧾 Stammdaten</h4>
+        </div>
+        <div class="column-group" id="preview-projekt">
+          <h4>📁 Projektstammdaten</h4>
+        </div>
+      </div>
+      <div class="admin-tab-save">
+        <button class="button" onclick="saveFieldVisibility()">Speichern</button>
+      </div>
+    </div>
+
+    <!-- Logo & Branding -->
+    <div id="admin-branding" style="display:none">
+      <h3>Logo hochladen</h3>
+      <input type="file" id="logoUpload" accept="image/*">
+      <div style="margin-top: 10px;">
+        <img id="previewLogo" src="" alt="Logo Vorschau" style="max-height: 100px;">
+      </div>
+
+      <h3>Button-Farbe ändern</h3>
+      <input type="color" id="btnColorPicker">
+    </div>
+
+    <!-- Benutzerverwaltung -->
+    <div id="admin-users" style="display:none">
+      <h3>Benutzerverwaltung</h3>
+      <div>
+        <input type="text" id="newUsername" placeholder="Benutzername">
+        <input type="password" id="newPassword" placeholder="Passwort">
+        <select id="newRole">
+          <option value="admin">Admin</option>
+          <option value="user">User</option>
+        </select>
+        <label><input type="checkbox" id="permLayout"> Layout</label>
+        <label><input type="checkbox" id="permBranding"> Branding</label>
+        <label><input type="checkbox" id="permUsers"> Benutzer</label>
+        <label><input type="checkbox" id="permExport"> Export</label>
+        <button class="button" onclick="addUser()">Hinzufügen</button>
+      </div>
+      <div id="userList" style="margin-top:20px;"></div>
+<div id="editUserModal" style="display:none; position: fixed; top: 10%; left: 50%; transform: translateX(-50%); width: 600px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.3); z-index: 9999;">
+  <h3>Benutzer bearbeiten</h3>
+  <input type="text" id="editUsername" placeholder="Benutzername" style="width: 100%; margin-bottom: 10px;">
+  <input type="text" id="editEmail" placeholder="E-Mail" style="width: 100%; margin-bottom: 10px;">
+  <input type="text" id="editPhone" placeholder="Telefonnummer" style="width: 100%; margin-bottom: 10px;">
+  <input type="text" id="editPersonalId" placeholder="Personalnummer" style="width: 100%; margin-bottom: 10px;">
+  <select id="editCampaign" style="width: 100%; margin-bottom: 10px;">
+    <option value="">Keine Kampagne</option>
+    <option value="Kampagne A">Kampagne A</option>
+    <option value="Kampagne B">Kampagne B</option>
+  </select>
+  <select id="editRole" style="width: 100%; margin-bottom: 10px;">
+    <option value="admin">Admin</option>
+    <option value="user">User</option>
+  </select>
+  <label><input type="checkbox" id="editPermLayout"> Layout</label>
+  <label><input type="checkbox" id="editPermBranding"> Branding</label>
+  <label><input type="checkbox" id="editPermUsers"> Benutzer</label>
+  <label><input type="checkbox" id="editPermExport"> Export</label>
+  <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+    <button onclick="saveUserChanges()" class="button">Speichern</button>
+    <button onclick="document.getElementById('editUserModal').style.display='none'" class="button">Abbrechen</button>
+  </div>
+</div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+let currentUser = null;
+
+function switchView(viewId) {
+  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+  document.querySelector(`#${viewId}`).classList.add('active');
+  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(btn => {
+    if (btn.getAttribute('onclick').includes(viewId)) btn.classList.add('active');
+  });
+}
+
+
+let users = JSON.parse(localStorage.getItem("users")) || [
+  {
+    username: "superadmin",
+    password: "1234",
+    role: "superadmin",
+    permissions: { branding: true, users: true, layout: true, export: true }
+  }
+];
+
+function showAdminTab(tab) {
+  document.querySelectorAll('#admin .admin-toggle button').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`#admin .admin-toggle button[onclick*="${tab}"]`).classList.add('active');
+
+  ["visibility", "layout", "preview", "branding", "users"].forEach(id => {
+    const el = document.getElementById("admin-" + id);
+    if (el) el.style.display = id === tab ? "block" : "none";
+  });
+
+  if (tab === 'preview') renderLeadPreview();
+  if (tab === 'users') renderUserList();
+}
+
+function addUser() {
+  const username = document.getElementById("newUsername").value;
+  const password = document.getElementById("newPassword").value;
+  const role = document.getElementById("newRole").value;
+
+  const permissions = {
+    layout: document.getElementById("permLayout").checked,
+    branding: document.getElementById("permBranding").checked,
+    users: document.getElementById("permUsers").checked,
+    export: document.getElementById("permExport").checked
+  };
+
+  users.push({ username, password, role, permissions });
+  localStorage.setItem("users", JSON.stringify(users));
+  renderUserList();
+}
+
+function renderUserList() {
+  const container = document.getElementById("userList");
+  container.innerHTML = "<h4>Alle Benutzer:</h4>";
+  users.forEach((u, i) => {
+    container.innerHTML += `
+      <div style="padding:10px; border:1px solid #ccc; margin-bottom:10px; border-radius:6px">
+        <strong>${u.username}</strong> – ${u.role.toUpperCase()}<br>
+        Rechte: ${Object.entries(u.permissions).filter(([k, v]) => v).map(([k]) => k).join(", ")}<br>
+        Kampagne: ${u.campaign || "Keine"}<br>
+        Tel: ${u.phone || "-"}<br>
+        E-Mail: ${u.email || "-"}<br>
+        Personal-Nr: ${u.personalId || "-"}<br>
+        <button onclick="editUser(${i})">✏️ Bearbeiten</button>
+        <button onclick="deleteUser(${i})">🗑️ Löschen</button>
+      </div>
+    `;
+  });
+}
+
+let editIndex = null;
+
+function editUser(index) {
+  const user = users[index];
+  editIndex = index;
+  document.getElementById("editUsername").value = user.username;
+  document.getElementById("editEmail").value = user.email || "";
+  document.getElementById("editPhone").value = user.phone || "";
+  document.getElementById("editPersonalId").value = user.personalId || "";
+  document.getElementById("editCampaign").value = user.campaign || "";
+  document.getElementById("editRole").value = user.role;
+  document.getElementById("editPermLayout").checked = user.permissions.layout;
+  document.getElementById("editPermBranding").checked = user.permissions.branding;
+  document.getElementById("editPermUsers").checked = user.permissions.users;
+  document.getElementById("editPermExport").checked = user.permissions.export;
+
+  document.getElementById("editUserModal").style.display = "block";
+}
+
+function saveUserChanges() {
+  const u = users[editIndex];
+  u.username = document.getElementById("editUsername").value;
+  u.email = document.getElementById("editEmail").value;
+  u.phone = document.getElementById("editPhone").value;
+  u.personalId = document.getElementById("editPersonalId").value;
+  u.campaign = document.getElementById("editCampaign").value;
+  u.role = document.getElementById("editRole").value;
+  u.permissions = {
+    layout: document.getElementById("editPermLayout").checked,
+    branding: document.getElementById("editPermBranding").checked,
+    users: document.getElementById("editPermUsers").checked,
+    export: document.getElementById("editPermExport").checked
+  };
+
+  localStorage.setItem("users", JSON.stringify(users));
+  document.getElementById("editUserModal").style.display = "none";
+  renderUserList();
+}
+</script>
+
+
+</section>
+
+
+<script>
+let leads = [], currentIndex = 0, visibleFields = [], fieldOrder = [];
+
+const editableFields = [
+  "Anrede Projekt",
+  "Vorname Projekt",
+  "Nachname Projekt",
+  "Straße Projekt",
+  "Hausnummer Projekt",
+  "PLZ Projekt",
+  "Ort Projekt"
+];
+
+let fieldGroups = {
+  "Vorname": "stammdaten",
+  "Nachname": "stammdaten",
+  "Straße": "stammdaten",
+  "Hausnr.": "stammdaten",
+  "PLZ": "stammdaten",
+  "Ort": "stammdaten",
+  "E-Mail Eigentümer": "projekt",
+  "Strasse_Hausnummer": "projekt"
+};
+
+
+function saveAllToStorage() {
+  localStorage.setItem("leads", JSON.stringify(leads));
+  console.log("Daten wurden gespeichert!");
+  localStorage.setItem("currentIndex", currentIndex.toString());
+  localStorage.setItem("visibleFields", JSON.stringify(visibleFields));
+  localStorage.setItem("fieldOrder", JSON.stringify(fieldOrder));
+}
+
+
+function switchView(viewId) {
+  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+  document.querySelector(`#${viewId}`).classList.add('active');
+  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(btn => {
+    if (btn.getAttribute('onclick').includes(viewId)) btn.classList.add('active');
+  });
+}
+
+function showAdminTab(tab) {
+  document.querySelectorAll('#admin .admin-toggle button').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`#admin .admin-toggle button[onclick*="${tab}"]`).classList.add('active');
+
+  ["visibility", "layout", "preview", "branding", "users"].forEach(id => {
+    const el = document.getElementById("admin-" + id);
+    if (el) el.style.display = id === tab ? "block" : "none";
+  });
+
+  if (tab === 'preview') renderLeadPreview();
+  if (tab === 'users') renderUserList();
+}
+
+function toggleReminderVisibility() {
+  const status = document.getElementById("leadStatus").value;
+  document.getElementById("reminderBlock").style.display = status.includes("Wiedervorlage") ? 'block' : 'none';
+}
+
+function renderLead() {
+  // 🟢 SPEICHERN VOR DEM WECHSEL
+  const lead = leads[currentIndex];
+
+
+  // 🟢 JETZT LADEN
+  const container = document.getElementById("leadFields");
+  container.innerHTML = '';
+  
+  if (!lead) return;
+fillPhoneNumbersFromLead(lead);
+
+
+  // 🟢 Status & Notiz erst setzen, wenn HTML im DOM ist
+  setTimeout(() => {
+    const statusEl = document.getElementById("leadStatus");
+    const reminderEl = document.getElementById("reminderDate");
+    const notesEl = document.getElementById("notes");
+
+    if (statusEl) statusEl.value = lead.status || "Neu";
+    if (reminderEl) reminderEl.value = lead.wiedervorlage || "";
+    if (notesEl) notesEl.value = lead.notiz || "";
+
+    toggleReminderVisibility();
+  }, 0);
+
+
+
+  // UND JETZT wie vorher weiter
+ 
+  container.innerHTML = '';
+  
+
+const editableInputs = editableFields.map(field => {
+  const value = lead[field] || "";
+  return `
+    <div class="field-box">
+      <label class="label">${field}</label>
+      <input type="text" id="edit-${field}" value="${value}">
+    </div>
+  `;
+}).join("");
+
+
+  if (!lead) return;
+
+  // Benutzerdefinierte Felder anzeigen (zweispaltig)
+const leftFields = [];
+const rightFields = [];
+
+(fieldOrder.length ? fieldOrder : visibleFields).forEach(field => {
+  if (!visibleFields.includes(field)) return;
+  const group = fieldGroups[field] || "stammdaten";
+if (group === "projekt") {
+  rightFields.push(field);
+} else {
+  leftFields.push(field);
+}
+
+});
+
+const buildGroupHTML = (fields) => {
+  return fields.map(field => {
+    const value = lead[field] || '';
+    return `
+      <div class="field-box" ondblclick="enableEditing(this, '${field}')">
+        <label class="label">${field}</label>
+        <div class="field-value">${value}</div>
+      </div>
+    `;
+  }).join('');
+};
+
+container.innerHTML = `
+    <div style="display: flex; gap: 20px; align-items: flex-start;">
+      <!-- Linke Spalte: Stammdaten -->
+      <div style="flex: 1;">
+        <h4 style="margin-bottom: 10px;">📌 Stammdaten</h4>
+        <div class="column-group">${buildGroupHTML(leftFields)}</div>
+      </div>
+
+    <!-- Mittlere Spalte: Projekt-Stammdaten -->
+      <div style="flex: 1;">
+        <h4 style="margin-bottom: 10px;">🛠️ Projekt-Stammdaten</h4>
+        <div class="column-group">${buildGroupHTML(rightFields)}</div>
+      </div>
+    <!-- Rechte Spalte: Status & Notiz -->
+    <div style="flex: 1;">
+      <h4 style="margin-bottom: 10px;">📄 Status</h4>
+      <div class="field-box">
+        <label class="label">Status</label>
+        <select id="leadStatus" onchange="toggleReminderVisibility(); handleStatusChange();">
+
+  <option>Neu</option>
+  <option>Anrufbeantworter</option>
+  <option>Keine Antwort</option>
+  <option>Nicht erreicht</option>
+  <option>Kein Interesse</option>
+  <option>Verkauf</option>
+  <option>Allgemeine Wiedervorlage</option>
+  <option>Persönliche Wiedervorlage</option>
+  <option>Besetzt</option>
+  <option>Fax</option>
+  <option>Negativ</option>
+  <option>Positiv</option>
+</select>
+
+      </div>
+      <div id="reminderBlock" class="field-box" style="display: none;">
+  <label class="label">Wiedervorlage</label>
+  <input type="date" id="reminderDate" onchange="handleStatusChange()">
+</div>
+
+      <div class="field-box" style="margin-top: 20px;">
+  <label class="label">Gesprächsnotiz</label>
+  <textarea id="notes" oninput="handleStatusChange()" style="width: 100%; height: 120px;"></textarea>
+</div>
+
+    </div>
+  </div>
+`;
+
+
+
+  // Telefonnummern als Tabellenzeilen anzeigen
+if (!lead) return;
+
+document.getElementById("anrede").textContent = lead["Anrede"] || "";
+document.getElementById("titel").textContent = lead["Titel"] || "";
+document.getElementById("name").textContent = lead["Vorname"] + " " + (lead["Nachname"] || lead["Name"] || "");
+document.getElementById("firma").textContent = lead["Firma"] ? `| ${lead["Firma"]}` : "";
+const adresse = [];
+if (lead["Straße"]) adresse.push(lead["Straße"]);
+if (lead["Hausnr."]) adresse.push(lead["Hausnr."]);
+const zeile1 = adresse.join(" ");
+const zeile2 = (lead["PLZ"] || "") + " " + (lead["Ort"] || "");
+document.getElementById("adresse").innerHTML = `${zeile1}<br>${zeile2}`;
+
+  // Mikrofonbutton hinzufügen
+  
+}
+
+function enableEditing(container, field) {
+  const lead = leads[currentIndex];
+  if (!lead) return;
+
+  const oldValue = lead[field] || "";
+
+  container.innerHTML = `
+    <label class="label">${field}</label>
+    <input type="text" 
+      value="${oldValue}" 
+      onblur="saveEditedField(this, '${field}')" 
+      style="width: 100%; padding: 6px; margin-top: 4px;" 
+      autofocus>
+  `;
+}
+
+function saveEditedField(input, field) {
+  const newValue = input.value.trim();
+  leads[currentIndex][field] = newValue;
+
+  saveAllToStorage();
+  updateActiveContactList();
+
+  const container = input.parentElement;
+  container.innerHTML = `
+    <label class="label">${field}</label>
+    <div class="field-value">${newValue}</div>
+  `;
+}
+
+
+function renderLeadPreview() {
+  previewFieldGroups = JSON.parse(JSON.stringify(fieldGroups));
+  const stammdaten = document.getElementById("preview-stammdaten");
+  const projekt = document.getElementById("preview-projekt");
+
+  stammdaten.innerHTML = "<h4>🧾 Stammdaten</h4>";
+  projekt.innerHTML = "<h4>📁 Projektstammdaten</h4>";
+
+  const lead = leads[currentIndex] || {};
+  const allFields = fieldOrder.length ? fieldOrder : visibleFields;
+
+  allFields.forEach(field => {
+    if (!visibleFields.includes(field)) return;
+    const value = lead[field] || "";
+    const box = document.createElement("div");
+    box.className = "field-box";
+    box.draggable = true;
+    box.dataset.field = field;
+    box.innerHTML = `<div class="label">${field}</div><div>${value}</div>`;
+
+    const group = previewFieldGroups[field];
+    if (group === "projekt") {
+      projekt.appendChild(box);
+    } else {
+      stammdaten.appendChild(box);
+    }
+  });
+
+  enablePreviewDragDrop();
+}
+
+function makeCallbarSticky() {
+  // Optional: Du kannst hier Sticky-Verhalten für die Call-Bar programmieren
+  console.log("makeCallbarSticky aufgerufen (aktuell leer)");
+}
+
+
+
+function startCall() {
+  const phone = getCurrentPhoneNumber();
+  if (phone) {
+    const now = new Date();
+    const timestamp = now.toISOString(); // ✅ Datum + Zeit im ISO-Format
+    if (leads[currentIndex]) {
+      leads[currentIndex].lastCallDate = timestamp;
+    }
+    saveAllToStorage();
+    updateActiveContactList();
+    window.location.href = 'tel:' + phone;
+  } else {
+    alert("Keine Telefonnummer gefunden.");
+  }
+}
+
+function endCall() {
+  alert("Anruf beendet.");
+}
+
+function toggleMic() {
+  const btn = document.getElementById("micToggle");
+  if (btn.textContent.includes("Stumm")) {
+    btn.textContent = "🎙️ Aktiv";
+    btn.classList.remove("button");
+    btn.style.backgroundColor = "#ccc";
+  } else {
+    btn.textContent = "🎙️ Stumm";
+    btn.classList.add("button");
+    btn.style.backgroundColor = "#8c1aff";
+  }
+}
+
+function getCurrentPhoneNumber() {
+  const lead = leads[currentIndex];
+  if (!lead) return null;
+  const phoneField = Object.keys(lead).find(key =>
+    key.toLowerCase().includes("telefon") && lead[key]
+  );
+  if (phoneField) return lead[phoneField];
+  return null;
+}
+
+
+
+function saveAndNextLead() {
+  if (leads[currentIndex]) {
+    leads[currentIndex].status = document.getElementById("leadStatus")?.value || "Neu";
+    leads[currentIndex].wiedervorlage = document.getElementById("reminderDate")?.value || "";
+    leads[currentIndex].notiz = document.getElementById("notes")?.value || "";
+  }
+
+  saveAllToStorage();
+  updateActiveContactList();
+
+  const today = new Date().toISOString().slice(0, 10); // Format YYYY-MM-DD
+
+  // 1. Suche nächsten Lead mit Status "Neu" und Wiedervorlage <= heute
+  const nextNeuIndex = leads.findIndex((lead, index) => {
+    if (index <= currentIndex) return false;
+    if (lead.status !== "Neu") return false;
+    if (lead.wiedervorlage && lead.wiedervorlage > today) return false;
+    return true;
+  });
+
+  if (nextNeuIndex !== -1) {
+    currentIndex = nextNeuIndex;
+    renderLead();
+    return;
+  }
+
+  // 2. Suche nächsten verfügbaren Lead ohne zukünftige Wiedervorlage
+  const nextAvailableIndex = leads.findIndex((lead, index) => {
+    if (index <= currentIndex) return false;
+    if (lead.wiedervorlage && lead.wiedervorlage > today) return false;
+    return true;
+  });
+
+  if (nextAvailableIndex !== -1) {
+    currentIndex = nextAvailableIndex;
+    renderLead();
+    return;
+  }
+
+  // 3. Wenn nichts mehr da ist: Suche "schlechte" Leads ("Anrufbeantworter" oder "Keine Antwort")
+  const badLeads = leads
+    .filter(lead => 
+      ["Anrufbeantworter", "Keine Antwort"].includes(lead.status) &&
+      (!lead.wiedervorlage || lead.wiedervorlage <= today)
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.lastCallDate || a.lastContact || a.createdAt || 0);
+      const dateB = new Date(b.lastCallDate || b.lastContact || b.createdAt || 0);
+      return dateA - dateB; // Älteste zuerst
+    });
+
+  if (badLeads.length > 0) {
+    const leadIndex = leads.indexOf(badLeads[0]);
+    if (leadIndex !== -1) {
+      currentIndex = leadIndex;
+      renderLead();
+      return;
+    }
+  }
+
+  // 4. Wenn wirklich alles abgearbeitet ist
+  alert("✅ Du hast alle Leads durchgearbeitet.");
+  currentIndex = leads.length - 1;
+  renderLead();
+}
+
+function handleInlineChange(field, value) {
+  if (!leads[currentIndex]) return;
+  leads[currentIndex][field] = value;
+  saveAllToStorage();
+  updateActiveContactList();
+}
+
+
+
+function renderReport() {
+  const tbody = document.getElementById("reportData");
+  tbody.innerHTML = '';
+  leads.forEach(lead => {
+    const name = lead.Vorname || lead.Name || '';
+    const status = lead.status || 'Neu';
+    const wiedervorlage = lead.wiedervorlage || '';
+
+    const row = `
+      <tr>
+        <td>${name}</td>
+        <td>${status}</td>
+        <td>${wiedervorlage}</td>
+      </tr>
+    `;
+    tbody.innerHTML += row;
+  });
+}
+
+function saveFieldVisibility() {
+  localStorage.setItem("visibleFields", JSON.stringify(visibleFields));
+  fieldOrder = [...document.querySelectorAll('#fieldOrder li')].map(li => li.innerText);
+  localStorage.setItem("fieldOrder", JSON.stringify(fieldOrder));
+ 
+fieldGroups = JSON.parse(JSON.stringify(previewFieldGroups)); // 🧠 Vorschau-Zuordnung übernehmen
+localStorage.setItem("fieldGroups", JSON.stringify(fieldGroups)); // 💾 auch speichern
+ renderLead();
+
+}
+
+function renderFieldVisibilitySettings() {
+  const container = document.getElementById("fieldVisibilityList");
+  const orderContainer = document.getElementById("fieldOrder");
+  container.innerHTML = '';
+  orderContainer.innerHTML = '';
+  const allFields = leads.length ? Object.keys(leads[0]) : [];
+  allFields.forEach(field => {
+  const row = document.createElement("div");
+  row.className = "visibility-row";
+  row.setAttribute("data-field", field);
+
+  const label = document.createElement("span");
+  label.innerText = field;
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = visibleFields.includes(field);
+
+  // ✅ Direktklick auf Checkbox
+  checkbox.addEventListener("click", (e) => {
+    e.stopPropagation(); // verhindert doppelte Ausführung
+  });
+
+  // ✅ Klick auf die ganze Zeile
+  row.addEventListener("click", () => {
+    checkbox.checked = !checkbox.checked;
+
+    if (checkbox.checked) {
+      if (!visibleFields.includes(field)) visibleFields.push(field);
+    } else {
+      visibleFields = visibleFields.filter(f => f !== field);
+    }
+
+    renderFieldVisibilitySettings();    // Vorschau neu bauen
+    renderLeadPreview();
+    saveFieldVisibility();              // ✅ sofort speichern
+  });
+
+  row.appendChild(label);
+  row.appendChild(checkbox);
+  container.appendChild(row);
+});
+
+// 🟪 Sortierbare Felder unten anzeigen
+visibleFields.forEach(field => {
+  const li = document.createElement("li");
+  li.textContent = field;
+  li.style.padding = "6px";
+  li.style.background = "#eee";
+  li.style.marginBottom = "4px";
+  li.style.cursor = "move";
+  orderContainer.appendChild(li);
+});
+
+$("#fieldOrder").sortable();
+
+}
+
+function exportData() {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(leads);
+  XLSX.utils.book_append_sheet(wb, ws, "Leads");
+  XLSX.writeFile(wb, "leads_export.xlsx");
+}
+
+document.getElementById("fileInput").addEventListener("change", function(evt) {
+  const file = evt.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const workbook = XLSX.read(e.target.result, { type: "binary" });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    if (!rawData.length || rawData.length < 2) {
+      alert("⚠️ Keine gültigen Daten gefunden.");
+      return;
+    }
+
+    const headers = rawData[0];
+    const dataRows = rawData.slice(1);
+
+    const importedLeads = dataRows.map(row => {
+      const lead = {};
+      headers.forEach((header, i) => {
+        if (header) {
+          lead[header.trim()] = row[i] || "";
+        }
+      });
+      if (!lead.status || lead.status.trim() === "") {
+        lead.status = "Neu";
+      }
+      return lead;
+    }).filter(l => Object.keys(l).length > 0);
+
+    if (importedLeads.length === 0) {
+      alert("⚠️ Keine gültigen Leads gefunden.");
+      return;
+    }
+
+    const name = prompt("Name der Kontaktliste:");
+    if (name) {
+  const newList = {
+    id: Date.now(),
+    name: name.trim(),
+    date: new Date(),
+    leads: importedLeads
+  };
+  contactLists.push(newList);
+  saveContactLists();
+
+  // Aktiviere standardmäßig NICHT sofort die neue Liste!
+  const makeActive = confirm(`Soll "${name.trim()}" direkt aktiviert werden?`);
+
+  if (makeActive) {
+  localStorage.setItem("activeListId", newList.id);
+  leads = [...importedLeads];
+
+  // 👉 Hier neue Bedingung
+  if (!visibleFields || visibleFields.length === 0) {
+    visibleFields = headers.filter(h => !!h).slice(0, 6);
+  }
+
+  // 🛠️ Neue Felder ergänzen, aber nichts kaputt machen
+  const importedFields = headers.filter(h => !!h);
+  importedFields.forEach(field => {
+    if (!visibleFields.includes(field)) {
+      visibleFields.push(field);
+    }
+    if (!fieldGroups[field]) {
+      fieldGroups[field] = "stammdaten"; // Standardmäßig links zuordnen
+    }
+  });
+
+  currentIndex = 0;
+  renderLead();
+  renderFieldVisibilitySettings();
+  renderReport();
+}
+
+
+  saveAllToStorage();
+  alert("✅ Leads erfolgreich importiert!");
+}
+
+  };
+  reader.readAsBinaryString(file);
+});
+
+window.onload = function () {
+ensureInboundList(); // 🔁 sorgt für die "Inbound"-Liste
+
+  const savedContactLists = localStorage.getItem("contactLists");
+  if (savedContactLists) {
+    contactLists = JSON.parse(savedContactLists);
+  }
+
+  // Nur aktivierte Kontaktlisten zusammensetzen:
+  leads = [];
+  contactLists.forEach(list => {
+    if (list.active) {
+      leads = leads.concat(list.leads);
+    }
+  });
+
+  // 🛡️ kaputte/leere Leads filtern
+  leads = leads.filter(lead => Object.keys(lead).length > 0);
+
+  const savedIndex = localStorage.getItem("currentIndex");
+  const savedFields = localStorage.getItem("visibleFields");
+  const savedOrder = localStorage.getItem("fieldOrder");
+  const savedGroups = localStorage.getItem("fieldGroups");
+
+  if (savedIndex) {
+    currentIndex = parseInt(savedIndex);
+    if (currentIndex >= leads.length || currentIndex < 0) currentIndex = 0;
+  }
+
+  if (savedFields) visibleFields = JSON.parse(savedFields);
+  if (savedOrder) fieldOrder = JSON.parse(savedOrder);
+  if (savedGroups) fieldGroups = JSON.parse(savedGroups);
+
+  setTimeout(renderLead, 100);
+  makeCallbarSticky();
+  renderFieldVisibilitySettings();
+  renderReport();
+  renderLeadPreview();
+};
+
+// Branding: Logo speichern und laden
+document.addEventListener("DOMContentLoaded", () => {
+  const headerLogo = document.getElementById("headerLogo");
+  const previewLogo = document.getElementById("previewLogo");
+  const logoInput = document.getElementById("logoUpload");
+
+  const savedLogo = localStorage.getItem("customLogo");
+  if (savedLogo && headerLogo && previewLogo) {
+    headerLogo.src = savedLogo;
+    previewLogo.src = savedLogo;
+  };
+
+  if (logoInput) {
+    logoInput.addEventListener("change", function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const dataUrl = e.target.result;
+        localStorage.setItem("customLogo", dataUrl);
+        if (headerLogo) headerLogo.src = dataUrl;
+        if (previewLogo) previewLogo.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+
+// Erweiterung für Admin-Tabs
+function showAdminTab(tab) {
+  document.querySelectorAll('#admin .admin-toggle button').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`#admin .admin-toggle button[onclick*="${tab}"]`).classList.add('active');
+
+  ["visibility", "layout", "preview", "branding", "users"].forEach(id => {
+    const el = document.getElementById("admin-" + id);
+    if (el) el.style.display = id === tab ? "block" : "none";
+  });
+
+  if (tab === 'preview') renderLeadPreview();
+  if (tab === 'users') renderUserList();
+}
+function goBack() {
+  if (currentIndex > 0) {
+    // Speichere vorherigen Lead
+    if (leads[currentIndex]) {
+      leads[currentIndex].status = document.getElementById("leadStatus")?.value || "Neu";
+      leads[currentIndex].wiedervorlage = document.getElementById("reminderDate")?.value || "";
+      leads[currentIndex].notiz = document.getElementById("notes")?.value || "";
+    }
+
+    currentIndex--;
+    saveAllToStorage();
+updateActiveContactList();
+
+    renderLead();
+  } else {
+    alert("Dies ist der erste Lead.");
+  }
+}
+
+function searchLead() {
+  const term = document.getElementById("leadSearch").value.toLowerCase();
+  const index = leads.findIndex(lead => {
+    return Object.values(lead).some(val =>
+      String(val).toLowerCase().includes(term)
+    );
+  });
+
+  if (index !== -1) {
+    currentIndex = index;
+    localStorage.setItem("currentIndex", currentIndex.toString());
+    renderLead();
+    renderLeadPreview();
+  }
+}
+function openSearchPopup() {
+  document.getElementById("searchPopup").style.display = "block";
+  document.getElementById("popupSearchInput").value = "";
+  document.getElementById("searchResults").innerHTML = "";
+  document.getElementById("popupSearchInput").focus();
+}
+
+function closeSearchPopup() {
+  document.getElementById("searchPopup").style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("popupSearchInput");
+  if (input) {
+    input.addEventListener("input", function () {
+      const term = input.value.toLowerCase();
+      const resultsContainer = document.getElementById("searchResults");
+      resultsContainer.innerHTML = "";
+
+      leads.forEach((lead, index) => {
+        const match = Object.values(lead).some(val =>
+          String(val).toLowerCase().includes(term)
+        );
+        if (match) {
+          const firma = lead["Firma"] || "🧍 Privatkunde";
+
+          const vorname = lead["Vorname"] || "";
+          const nachname = lead["Nachname"] || lead["Name"] || "";
+          const straße = lead["Straße"] || lead["Strasse"] || "";
+          const ort = lead["Ort"] || "";
+          const plz = lead["PLZ"] || lead["Postleitzahl"] || "";
+          const telefon = lead["Telefon Eigentümer"] || lead["Telefonnummer"] || "";
+
+          const resultItem = document.createElement("div");
+            resultItem.innerHTML = `
+  <div onclick="gotoLead(${index})" style="
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  ">
+    <strong>${firma}</strong>
+    <span>${vorname} ${nachname}</span>
+    <span>${straße} | ${plz} ${ort}</span>
+    <span>📞 ${telefon}</span>
+  </div>
+`;
+
+
+          resultsContainer.appendChild(resultItem);
+if (resultsContainer.children.length > 0) {
+  document.getElementById("bulkActionBar").style.display = "block";
+} else {
+  document.getElementById("bulkActionBar").style.display = "none";
+}
+
+        }
+      });
+
+      if (!resultsContainer.innerHTML) {
+        resultsContainer.innerHTML = "<div style='color: #888;'>Keine Treffer gefunden.</div>";
+      }
+    });
+  }
+});
+document.addEventListener("keydown", function(e) {
+  if ((e.ctrlKey && e.key === "f") || (e.altKey && e.key === "s")) {
+    e.preventDefault();
+    openSearchPopup();
+  }
+});
+
+function openNewLeadModal() {
+  document.getElementById("newLeadModal").style.display = "block";
+}
+
+function closeNewLeadModal() {
+  document.getElementById("newLeadModal").style.display = "none";
+}
+
+ // ➕ Hier ab hier einfügen
+  
+let tempFieldMapping = {};
+
+function openFieldMappingDialog(newFields) {
+  const container = document.getElementById("mappingFieldsContainer");
+  const dialog = document.getElementById("fieldMappingDialog");
+  container.innerHTML = "";
+
+  newFields.forEach(field => {
+    const row = document.createElement("div");
+    row.style.marginBottom = "10px";
+
+    row.innerHTML = `
+      <label><strong>${field}</strong>: 
+        <select onchange="tempFieldMapping['${field}'] = this.value">
+          <option value="">Ignorieren</option>
+          <option value="Projekt">Als Projektfeld verwenden</option>
+          <option value="Normal">Als normales Feld anzeigen</option>
+        </select>
+      </label>
+    `;
+    container.appendChild(row);
+  });
+
+  dialog.style.display = "block";
+}
+
+function applyFieldMapping() {
+  for (const [field, type] of Object.entries(tempFieldMapping)) {
+    if (type === "Projekt") {
+      visibleFields.push(field);
+      fieldGroups[field] = "rechts"; // oder wie du willst
+    } else if (type === "Normal") {
+      visibleFields.push(field);
+    }
+  }
+
+  document.getElementById("fieldMappingDialog").style.display = "none";
+  renderLead();
+  renderFieldVisibilitySettings();
+  renderReport();
+  renderLeadPreview();
+  saveAllToStorage();
+updateActiveContactList();
+
+}
+
+function enablePreviewDragDrop() {
+  const containers = document.querySelectorAll("#leadFieldsPreview .column-group");
+
+  containers.forEach(container => {
+    container.addEventListener("dragover", e => e.preventDefault());
+
+    container.addEventListener("drop", e => {
+      e.preventDefault();
+      const field = e.dataTransfer.getData("field");
+      const dragged = document.querySelector(`.field-box[data-field="${field}"]`);
+      container.appendChild(dragged);
+
+      // 🧠 Spaltenzuweisung speichern
+      previewFieldGroups[field] = container.id.includes("projekt") ? "projekt" : "stammdaten";
+
+fieldOrder = Array.from(document.querySelectorAll("#leadFieldsPreview .field-box"))
+        .map(box => box.dataset.field);
+
+saveFieldVisibility();
+
+      // Optional: visuelles Feedback
+      container.style.border = "2px dashed #8c1aff";
+      setTimeout(() => container.style.border = "", 300);
+    });
+  });
+
+  document.querySelectorAll(".field-box").forEach(box => {
+    box.addEventListener("dragstart", e => {
+      e.dataTransfer.setData("field", box.dataset.field);
+      box.classList.add("dragging");
+    });
+    box.addEventListener("dragend", () => {
+      box.classList.remove("dragging");
+    });
+  });
+}
+
+// ENTER-Taste übernimmt die Felder, wenn Dialog aktiv ist
+document.addEventListener("keydown", function(e) {
+  const dialogVisible = document.getElementById("fieldMappingDialog")?.style.display === "block";
+  if (dialogVisible && e.key === "Enter") {
+    e.preventDefault();
+    applyFieldMapping();
+  }
+});
+
+let contactLists = JSON.parse(localStorage.getItem("contactLists")) || [];
+
+function ensureInboundList() {
+  let inbound = contactLists.find(l => l.name === "Inbound");
+
+  if (!inbound) {
+    inbound = {
+      id: Date.now(),
+      name: "Inbound",
+      date: new Date(),
+      leads: [],
+      active: true
+    };
+    contactLists.push(inbound);
+    saveContactLists();
+  }
+
+  localStorage.setItem("activeListId", inbound.id);
+  return inbound;
+}
+
+
+
+console.log("Kontaktlisten:", contactLists);
+
+
+function saveContactLists() {
+  localStorage.setItem("contactLists", JSON.stringify(contactLists));
+}
+
+function openContactListManager() {
+  let html = `
+  <div id="contactListModal" style="
+    position: fixed;
+    top: 2%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 95%;
+    height: 95vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    z-index: 10000;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  ">
+
+      <div style="flex: 2; overflow-y: auto; max-height: 80vh;">
+      <h3 style="margin-bottom: 10px;">📂 Kontaktlisten</h3>
+      <input type="text" id="contactListSearch" placeholder="🔍 Kontaktliste suchen..." 
+        style="width: 100%; padding: 10px; margin: 0 0 15px 0; border: 1px solid #ccc; border-radius: 6px;">
+
+  <table style="width:100%; border-collapse:collapse; text-align: center;">
+  <thead>
+    <tr style="background:#eee;">
+      <th style="text-align: center;">Name</th>
+      <th style="text-align: center;">Einspieldatum</th>
+      <th style="text-align: center;">Anzahl</th>
+      <th style="text-align: center;">Status</th>
+      <th style="text-align: center;">Aktionen</th>
+    </tr>
+  </thead>
+  <tbody>
+  <!-- Hier wird später der Inhalt per JS eingefügt -->
+
+  `;contactLists.forEach((list, i) => {
+  const counts = list.leads.reduce((acc, l) => {
+    acc[l.status] = (acc[l.status] || 0) + 1;
+    return acc;
+  }, {});
+  const total = list.leads.length;
+
+  const bars = Object.entries(counts).map(([status, count]) => {
+    const width = (count / total * 100).toFixed(1);
+    const color = status === "Verkauf" ? "#4caf50" : status === "Kein Interesse" ? "#f44336" : "#8c1aff";
+    return `<div style="background:${color};color:white;font-size:12px;padding:2px 5px;margin:2px;border-radius:4px;width:${width}%;">${status}: ${count}</div>`;
+  }).join("");
+
+  html += `
+    <tr style="border-bottom:1px solid #ccc; cursor:pointer;" onclick="highlightContactList(${i})">
+      <td>${list.name}</td>
+      <td>${new Date(list.date).toLocaleDateString()}</td>
+      <td>${total}</td>
+      <td><div style="display:flex; flex-direction:column; align-items:flex-start;">${bars}</div></td>
+     <td>
+  <div class="dropdown" style="position: relative;">
+    <button class="button-icon" onclick="event.stopPropagation(); toggleActionDropdown(${i})">⚙️</button>
+    <div id="dropdown-${i}" class="dropdown-content" style="display: none;">
+      <a href="#" onclick="event.stopPropagation(); renameContactList(${i})">✏️ Umbenennen</a>
+      <a href="#" onclick="event.stopPropagation(); deleteContactList(${i})">🗑️ Löschen</a>
+      <a href="#" onclick="event.stopPropagation(); emptyContactList(${i})">🧹 Leeren</a>
+    </div>
+  </div>
+
+  <button class="button-deactivate" onclick="event.stopPropagation(); toggleListActivation(${i})">
+    ${list.active ? '⏸️' : '▶️'}
+  </button>
+</div>
+
+</td>
+
+
+    </tr>
+  `;
+});
+
+html += `
+        </tbody>
+      </table>
+      <br>
+      <button class="button" onclick="closeContactListModal()">Schließen</button>
+    </div>
+    <div id="kontaktDetailBlock" style="flex: 1; overflow-y: auto; max-height: 80vh;"></div>
+  </div>
+`;
+
+  const existing = document.getElementById("contactListModal");
+  if (existing) existing.remove();
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+
+   // Live-Suche aktivieren
+  setTimeout(() => {
+    const searchInput = document.getElementById("contactListSearch");
+    const allRows = document.querySelectorAll("#contactListModal table tbody tr");
+
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        const term = searchInput.value.toLowerCase();
+        allRows.forEach(row => {
+          const text = row.innerText.toLowerCase();
+          row.style.display = text.includes(term) ? "" : "none";
+        });
+      });
+    }
+  }, 100);
+
+
+
+  document.body.appendChild(wrapper);
+}
+
+function closeContactListModal() {
+  const modal = document.getElementById("contactListModal");
+  const block = document.getElementById("kontaktDetailBlock");
+  if (modal) modal.remove();
+  if (block) block.remove(); // entfernt die Übersicht
+}
+
+function renameContactList(index) {
+  const newName = prompt("Neuer Name der Kontaktliste:", contactLists[index].name);
+  if (newName) {
+    contactLists[index].name = newName;
+    saveContactLists();
+    openContactListManager();
+  }
+}
+
+function deleteContactList(index) {
+  if (confirm("Kontaktliste wirklich löschen?")) {
+    contactLists.splice(index, 1);
+    saveContactLists();
+    openContactListManager();
+  }
+}
+
+const CONTACT_STATUSES = [
+  "Neu",
+  "Anrufbeantworter",
+  "Keine Antwort",
+  "Nicht erreicht",
+  "Kein Interesse",
+  "Verkauf",
+  "Allgemeine Wiedervorlage",
+  "Persönliche Wiedervorlage",
+  "Besetzt",
+  "Fax",
+  "Negativ",
+  "Positiv"
+];
+
+function highlightContactList(index) {
+  const rows = document.querySelectorAll("#contactListModal table tbody tr");
+  rows.forEach(row => row.style.backgroundColor = "white");
+  rows[index].style.backgroundColor = "#f5e8ff";
+
+  // Speichere ID der aktiven Liste
+  if (!contactLists[index].id) {
+    contactLists[index].id = Date.now();
+    saveContactLists();
+  }
+  localStorage.setItem("activeListId", contactLists[index].id);
+
+
+  const selectedList = contactLists[index];
+  const statusCounts = {};
+
+  selectedList.leads.forEach(lead => {
+    const status = lead.status && lead.status.trim() !== "" ? lead.status : "Neu";
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+  });
+
+  const total = selectedList.leads.length;
+  const abgeschlossen = statusCounts["Verkauf"] || 0;
+  const negativ = statusCounts["Kein Interesse"] || 0;
+  const positiv = statusCounts["Positiv"] || 0;
+
+  const nettokontakte = total - (abgeschlossen + negativ);
+  const abgeschlossenGesamt = abgeschlossen + negativ + positiv;
+
+  const percent = (val) => (val > 0 && total > 0) ? (val / total * 100).toFixed(2) + "%" : "0%";
+
+  const block = document.getElementById("kontaktDetailBlock");
+  block.innerHTML = `
+    <h4>📊 Übersicht "${selectedList.name}"</h4>
+    <table style="width:100%; font-size:14px;">
+      <thead>
+        <tr><th>Status</th><th style="text-align:right;">Anzahl</th></tr>
+      </thead>
+      <tbody>
+        ${CONTACT_STATUSES.map(stat => `
+          <tr>
+            <td>${stat}</td>
+            <td style="text-align:right;">${statusCounts[stat] || 0}</td>
+          </tr>`).join("")}
+      </tbody>
+    </table>
+    <hr>
+    <p><strong>Gesamtkontakte:</strong> ${total}</p>
+    <p><strong>Abgeschlossen:</strong> ${abgeschlossenGesamt}</p>
+    <p><strong>Nettokontakte:</strong> ${nettokontakte}</p>
+    <p><strong>Verkauft / Gesamt:</strong> ${percent(abgeschlossen)}</p>
+    <p><strong>Positiv / Netto:</strong> ${nettokontakte > 0 ? percent(positiv) : "0%"}</p>
+    <p><strong>Positiv / Gesamt:</strong> ${percent(positiv)}</p>
+    <hr>
+    <h5>📈 Status-Verteilung</h5>
+    ${CONTACT_STATUSES.map(stat => {
+      const val = statusCounts[stat] || 0;
+      const width = total > 0 ? (val / total * 100).toFixed(1) : 0;
+      return `
+        <div style="margin-bottom: 4px;">
+          <div style="font-size: 12px;">${stat} (${val})</div>
+          <div style="background: #ddd; border-radius: 6px; overflow: hidden;">
+            <div style="height: 8px; background: #8c1aff; width: ${width}%"></div>
+          </div>
+        </div>`;
+    }).join("")}
+
+    <button class="button" style="margin-top: 15px;" onclick="exportSingleList(${index})">
+      📤 Kontaktliste exportieren
+    </button>
+  `;
+}
+
+window.addEventListener("load", () => {
+  const savedUser = localStorage.getItem("currentUser");
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    document.getElementById("loginModal").style.display = "none";
+    document.getElementById("mainNav").style.display = "block";
+    document.getElementById("logoutWrapper").style.display = "flex";
+    document.getElementById("loggedInUser").textContent = "👤 " + currentUser.username;
+    renderLead();
+    renderReport();
+    renderLeadPreview();
+    renderFieldVisibilitySettings();
+    checkPermissions();
+  }
+});
+
+function checkPermissions() {
+  console.log("👤 Aktueller Benutzer:", currentUser);
+
+  if (!currentUser) return;
+
+  if (currentUser.role === "superadmin") {
+    currentUser.permissions = {
+      layout: true,
+      branding: true,
+      users: true,
+      export: true
+    };
+  }
+
+  const tabs = {
+    layout: ["layout", "visibility", "preview"],
+    branding: ["branding"],
+    users: ["users"],
+    export: []
+  };
+
+  for (const [key, sections] of Object.entries(tabs)) {
+    const allowed = currentUser.permissions?.[key];
+    
+    sections.forEach(id => {
+      const btn = document.querySelector(`#admin .admin-toggle button[onclick*="${id}"]`);
+      if (btn) btn.style.display = allowed ? "block" : "none";
+    });
+
+    if (key === "export") {
+      const exportBtn = document.querySelector('nav button[onclick*="exportData"]');
+      if (exportBtn) exportBtn.style.display = allowed ? "inline-block" : "none";
+    }
+  }
+}
+
+;
+
+  localStorage.setItem("users", JSON.stringify(users));
+  renderUserList();
+
+
+
+</script>
+<!-- Modal für neuen Lead -->
+<!-- Modal für neuen Lead -->
+<div id="newLeadModal" style="
+  display: none;
+  position: fixed;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  padding: 20px;
+  z-index: 9999;
+">
+  <h3>Neuen Lead anlegen</h3>
+
+  <form style="display: flex; flex-wrap: wrap; gap: 10px;" onsubmit="event.preventDefault(); saveNewLead();">
+    <input type="text" name="Vorname" placeholder="Vorname" data-field="Vorname" autocomplete="given-name" style="flex:1; padding: 10px;">
+    <input type="text" name="Nachname" placeholder="Nachname" data-field="Nachname" autocomplete="family-name" style="flex:1; padding: 10px;">
+    <input type="tel" name="Telefon" placeholder="Telefon" data-field="Telefon Eigentümer" autocomplete="tel" style="flex:1; padding: 10px;">
+    <input type="text" name="Straße" placeholder="Straße" data-field="Straße" autocomplete="street-address" style="flex:1; padding: 10px;">
+    <input type="text" name="Hausnummer" placeholder="Hausnummer" data-field="Hausnr." style="flex:1; padding: 10px;">
+    <input type="text" name="PLZ" placeholder="PLZ" data-field="PLZ" autocomplete="postal-code" style="flex:1; padding: 10px;">
+    <input type="text" name="Ort" placeholder="Ort" data-field="Ort" style="flex:1; padding: 10px;">
+    <textarea name="Notiz" placeholder="Notiz" data-field="Notiz" style="width:100%; padding: 10px;"></textarea>
+
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; width: 100%;">
+      <button type="submit" class="button">Speichern</button>
+      <button type="button" class="button" onclick="document.getElementById('newLeadModal').style.display='none'">Abbrechen</button>
+    </div>
+  </form>
+</div>
+
+  </div>
+
+<script>
+
+// ✅ Dummy-Funktion gegen ReferenceError
+function renderContactListFilter() {
+  console.log("renderContactListFilter wurde aufgerufen (Dummyfunktion)");
+  // Du kannst hier später echten Code einfügen, wenn nötig
+}
+
+
+function checkLogin() {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (user) {
+    currentUser = user;
+    document.getElementById("loginModal").style.display = "none";
+    document.getElementById("mainNav").style.display = "block";
+    document.getElementById("logoutWrapper").style.display = "flex";
+    document.getElementById("loggedInUser").textContent = "👤 " + user.username;
+    renderLead(); // 👁️ Filter nach Kampagne hier aktiv
+    renderContactListFilter();
+  } else {
+    document.getElementById("loginModal").style.display = "flex";
+    document.getElementById("mainNav").style.display = "none";
+    document.getElementById("logoutWrapper").style.display = "none";
+  }
+}
+
+function login() {
+  const user = document.getElementById("loginUsername").value.trim();
+  const pass = document.getElementById("loginPassword").value.trim();
+  const allUsers = JSON.parse(localStorage.getItem("users")) || [];
+  const match = allUsers.find(u => u.username === user && u.password === pass);
+
+  if (match) {
+    localStorage.setItem("currentUser", JSON.stringify(match));
+    checkLogin();
+  } else {
+    alert("❌ Falscher Benutzername oder Passwort");
+  }
+}
+
+function logout() {
+  localStorage.removeItem("currentUser");
+  location.reload();
+}
+
+function handleStatusChange() {
+function setReminderInDays(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  document.getElementById("reminderDate").value = date.toISOString().split("T")[0];
+  handleStatusChange(); // optional
+}
+
+  const status = document.getElementById("leadStatus")?.value || "Neu";
+  const reminder = document.getElementById("reminderDate")?.value || "";
+  const notes = document.getElementById("notes")?.value || "";
+
+  if (leads[currentIndex]) {
+    leads[currentIndex].status = status;
+    leads[currentIndex].wiedervorlage = reminder;
+    leads[currentIndex].notiz = notes;
+    leads[currentIndex].lastStatusChange = new Date().toISOString(); // ✅ Speichere wann der Status geändert wurde
+  }
+
+  saveAllToStorage();
+  updateActiveContactList();
+  saveContactLists();
+}
+
+function updateActiveContactList() {
+  const activeId = parseInt(localStorage.getItem("activeListId"));
+  const activeList = contactLists.find(list => list.id === activeId);
+
+  if (activeList && leads[currentIndex]) {
+    const newLead = leads[currentIndex];
+
+    // Nur hinzufügen, wenn nicht vorhanden
+    const exists = activeList.leads.some(l =>
+  l["Nachname"] === newLead["Nachname"] &&
+  l["Telefon Eigentümer"] === newLead["Telefon Eigentümer"]
+);
+
+
+    if (!exists) {
+      activeList.leads.push(newLead);
+    }
+
+    saveContactLists();
+  }
+}
+
+function openBulkStatusModal() {
+populateStatusDropdowns();
+  document.getElementById("bulkStatusModal").style.display = "block";
+}
+
+function closeBulkStatusModal() {
+  document.getElementById("bulkStatusModal").style.display = "none";
+}
+
+function applyBulkStatus() {
+  const from = document.getElementById("statusFrom").value;
+const to = document.getElementById("statusTo").value;
+
+  const searchTerm = document.getElementById("bulkSearchInput").value.toLowerCase();
+
+  if (!from || !to || from === to) {
+    alert("⚠️ Bitte wähle zwei verschiedene Status aus.");
+    return;
+  }
+
+  const matches = leads.filter(lead =>
+    (lead.status === from) &&
+    (searchTerm === "" || Object.values(lead).some(v =>
+      String(v).toLowerCase().includes(searchTerm)
+    ))
+  );
+
+  if (matches.length === 0) {
+    alert("❌ Keine passenden Leads gefunden.");
+    return;
+  }
+
+  if (!confirm(`Wirklich ${matches.length} Leads von "${from}" auf "${to}" setzen?`)) return;
+
+  matches.forEach(lead => lead.status = to);
+
+  saveAllToStorage();
+  updateActiveContactList(); // ✅ aktualisiert auch contactLists
+  renderReport();
+  alert(`✅ ${matches.length} Leads wurden aktualisiert.`);
+  closeBulkStatusModal();
+}
+
+
+</script>
+
+<!-- 🧩 Feldzuordnung (Mapping) Dialog -->
+<div id="fieldMappingDialog" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%);
+  width:600px; background:white; padding:20px; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.3); z-index:9999;">
+  <h3>Neue Felder zuordnen</h3>
+  <div id="mappingFieldsContainer" style="margin-bottom: 20px;"></div>
+  <div style="text-align: right;">
+    <button class="button" onclick="applyFieldMapping()">Übernehmen</button>
+    <button class="button" onclick="document.getElementById('fieldMappingDialog').style.display='none'">Abbrechen</button>
+  </div>
+</div>
+
+<!-- 🔍 Lead-Such-Popup -->
+<div id="searchPopup" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%);
+  width:600px; background:white; padding:20px; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.3); z-index:9999;">
+  <h3>Lead suchen</h3>
+  <input type="text" id="popupSearchInput" placeholder="Suchbegriff eingeben..." 
+    style="width: 100%; padding: 10px; margin-bottom: 10px;">
+  <div id="searchResults" style="max-height: 300px; overflow-y: auto;"></div>
+
+<!-- Aktionsleiste für Mehrfachauswahl mit Dropdown -->
+<div id="bulkActionBar" style="display:none; text-align:right; margin-top:10px;">
+  <div class="dropdown" style="display: inline-block;">
+    <button class="button" onclick="toggleActionMenu()">⚙️ Aktionen ▼</button>
+    <div id="actionMenu" class="dropdown-content" style="display: none;">
+      <a href="#" onclick="confirmBulkStatusUpdate()">📋 Status ändern</a>
+      <a href="#" onclick="confirmBulkDelete()">🗑️ Löschen</a>
+    </div>
+  </div>
+</div>
+
+  <div style="text-align:right; margin-top:10px;">
+    <button class="button" onclick="closeSearchPopup()">Schließen</button>
+  </div>
+ </div>
+
+
+<!-- Modal: Bulk-Status setzen -->
+
+<div id="bulkStatusModal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%);
+  background:white; padding:20px; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.3); width:600px; z-index:9999;">
+  <h3>📋 Leads nach Status ändern</h3>
+
+  <label>Von Status:</label>
+  <select id="statusFrom" style="width:100%; padding:10px; margin-bottom:10px;">
+  <option value="">-- Von Status wählen --</option>
+</select>
+<select id="statusTo" style="width:100%; padding:10px; margin-bottom:10px;">
+  <option value="">-- Auf Status setzen --</option>
+  <option>Neu</option>
+  <option>Anrufbeantworter</option>
+  <option>Keine Antwort</option>
+  <option>Nicht erreicht</option>
+  <option>Kein Interesse</option>
+  <option>Verkauf</option>
+  <option>Allgemeine Wiedervorlage</option>
+  <option>Persönliche Wiedervorlage</option>
+  <option>Besetzt</option>
+  <option>Fax</option>
+  <option>Negativ</option>
+  <option>Positiv</option>
+</select>
+
+
+ 
+  <label>🔍 Suche (optional):</label>
+  <input type="text" id="bulkSearchInput" oninput="liveBulkSearch()" placeholder="z. B. Nachname, Firma, Ort..." style="width:100%; padding:10px; margin-bottom:20px;">
+
+<div id="bulkSearchInfo" style="margin-bottom: 10px; color: #555;"></div>
+
+
+<!-- Alle auswählen & Aktionen -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+  <label><input type="checkbox" id="bulkSelectAll" onchange="toggleAllBulkCheckboxes()"> Alle auswählen</label>
+  <div class="dropdown" style="position: relative; display: inline-block;">
+    <button class="button" onclick="toggleBulkActionDropdown()">⚙️ Aktion ▼</button>
+    <div id="bulkActionDropdown" class="dropdown-content" style="display: none;">
+      <a href="#" onclick="confirmBulkStatusUpdate()">📋 Status ändern</a>
+      <a href="#" onclick="confirmBulkDelete()">🗑️ Löschen</a>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Hier erscheinen die Treffer -->
+<div id="bulkSearchResults" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px;"></div>
+
+
+
+<!-- Aktionsleiste für Mehrfachauswahl -->
+<div id="bulkActionBar" style="display:none; text-align:right; margin-top:10px;">
+  <button class="button" onclick="bulkUpdateStatus()">Status ändern</button>
+  <button class="button" onclick="bulkDeleteLeads()">Löschen</button>
+</div>
+
+
+  <div style="text-align:right;">
+    <button class="button" onclick="applyBulkStatus()">✅ Übernehmen</button>
+    <button class="button" onclick="closeBulkStatusModal()">❌ Abbrechen</button>
+  </div>
+</div>
+<script>
+// Escape-Taste Handling
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    if (document.getElementById("bulkStatusModal").style.display === "block") {
+      closeBulkStatusModal();
+    }
+    if (document.getElementById("searchPopup").style.display === "block") {
+      closeSearchPopup();
+    }
+  }
+});
+
+// 👉 NEUE Funktion für Live-Suche im "Leads nach Status ändern" Modal
+function liveBulkSearch() {
+  const searchTerm = document.getElementById("bulkSearchInput").value.toLowerCase();
+  const from = document.getElementById("statusFrom").value;
+
+  const matches = leads.filter(lead => {
+    const statusMatch = from ? lead.status === from : true;
+    const searchMatch = searchTerm === "" || Object.values(lead).some(v =>
+      String(v).toLowerCase().includes(searchTerm)
+    );
+    return statusMatch && searchMatch;
+  });
+
+  document.getElementById("bulkSearchInfo").textContent = `${matches.length} Treffer gefunden.`;
+
+  const resultBox = document.getElementById("bulkSearchResults");
+  resultBox.innerHTML = matches.map((lead, index) => {
+    const vorname = lead["Vorname"] || "";
+    const nachname = lead["Nachname"] || lead["Name"] || "";
+    const firma = lead["Firma"] || "🧍 Privatkunde";
+
+    const ort = lead["Ort"] || "";
+    const plz = lead["PLZ"] || "";
+    const telefon = lead["Telefon Eigentümer"] || lead["Telefonnummer"] || "";
+
+    return `
+      <label style="display:flex; align-items:center; gap:10px; padding: 6px 0; border-bottom: 1px solid #eee;">
+        <input type="checkbox" class="bulkLeadCheckbox" data-index="${leads.indexOf(lead)}">
+        <div><strong>${firma}</strong> | ${vorname} ${nachname} | ${plz} ${ort} | 📞 ${telefon}</div>
+      </label>
+    `;
+  }).join("");
+
+  document.getElementById("bulkActionBar").style.display = matches.length > 0 ? "block" : "none";
+}
+
+// Dropdowns bei "Status ändern" Modal befüllen
+function populateStatusDropdowns() {
+  const fromSelect = document.getElementById("statusFrom");
+  const toSelect = document.getElementById("statusTo");
+
+  if (!fromSelect || !toSelect) return;
+
+  // Reset
+  fromSelect.innerHTML = '<option value="">-- Von Status wählen --</option>';
+  toSelect.innerHTML = '<option value="">-- Auf Status setzen --</option>';
+
+  CONTACT_STATUSES.forEach(status => {
+    const opt1 = document.createElement("option");
+    opt1.value = status;
+    opt1.textContent = status;
+    fromSelect.appendChild(opt1);
+
+    const opt2 = document.createElement("option");
+    opt2.value = status;
+    opt2.textContent = status;
+    toSelect.appendChild(opt2);
+  });
+}
+
+// Für Bulk-Aktionen: ausgewählte Leads herausfinden
+function getSelectedLeadIndexes() {
+  return Array.from(document.querySelectorAll(".searchLeadCheckbox:checked"))
+              .map(cb => parseInt(cb.dataset.index));
+}
+
+// Massenänderung Status (bei Mehrfachauswahl)
+function bulkUpdateStatus() {
+  const indexes = getSelectedLeadIndexes();
+  if (indexes.length === 0) return alert("Bitte mindestens einen Lead auswählen.");
+
+  const newStatus = prompt("Neuen Status eingeben:");
+  if (!newStatus) return;
+
+  indexes.forEach(i => leads[i].status = newStatus);
+  saveAllToStorage();
+  updateActiveContactList();
+  renderReport();
+  alert(`${indexes.length} Leads auf Status "${newStatus}" gesetzt.`);
+  closeSearchPopup();
+}
+
+// Massenlöschung von Leads
+function bulkDeleteLeads() {
+  const indexes = getSelectedLeadIndexes();
+  if (indexes.length === 0) return alert("Bitte mindestens einen Lead auswählen.");
+
+  if (!confirm(`${indexes.length} Leads wirklich löschen?`)) return;
+
+  // Wichtig: Rückwärts löschen, sonst verschieben sich die Indizes
+  indexes.sort((a, b) => b - a).forEach(i => leads.splice(i, 1));
+
+  saveAllToStorage();
+  updateActiveContactList();
+  renderReport();
+  alert(`${indexes.length} Leads gelöscht.`);
+  closeSearchPopup();
+}
+
+document.addEventListener("click", function (e) {
+  const dropdown = document.getElementById("bulkActionDropdown");
+  if (!e.target.closest(".dropdown")) {
+    dropdown.style.display = "none";
+  }
+});
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  const input = document.getElementById("bulkSearchInput");
+  if (input) {
+    input.addEventListener("input", function () {
+      liveBulkSearch();
+    });
+  }
+});
+
+function toggleAllBulkCheckboxes() {
+  const all = document.querySelectorAll(".bulkLeadCheckbox");
+  const checked = document.getElementById("bulkSelectAll").checked;
+  all.forEach(cb => cb.checked = checked);
+}
+
+function getSelectedBulkIndexes() {
+  return Array.from(document.querySelectorAll(".bulkLeadCheckbox:checked"))
+              .map(cb => parseInt(cb.dataset.index));
+}
+
+function toggleActionMenu() {
+  const menu = document.getElementById("actionMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+function toggleBulkActionDropdown() {
+  const dropdown = document.getElementById("bulkActionDropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+}
+
+
+function confirmBulkDelete() {
+  const indexes = getSelectedBulkIndexes();
+  if (indexes.length === 0) return alert("Bitte wähle Leads aus.");
+
+  if (!confirm(`${indexes.length} Leads wirklich löschen?`)) return;
+
+  indexes.sort((a, b) => b - a).forEach(i => leads.splice(i, 1));
+  saveAllToStorage();
+  updateActiveContactList();
+  renderReport();
+  liveBulkSearch(); // Ergebnisse neu laden
+  alert(`${indexes.length} Leads gelöscht.`);
+}
+
+function confirmBulkStatusUpdate() {
+  const indexes = getSelectedBulkIndexes();
+  if (indexes.length === 0) return alert("Bitte wähle Leads aus.");
+
+  const dropdown = document.createElement("select");
+  dropdown.style.padding = "10px";
+  dropdown.style.marginTop = "10px";
+  dropdown.style.width = "100%";
+
+  CONTACT_STATUSES.forEach(status => {
+    const opt = document.createElement("option");
+    opt.value = status;
+    opt.textContent = status;
+    dropdown.appendChild(opt);
+  });
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = "<h3>Status auswählen</h3>";
+  wrapper.appendChild(dropdown);
+
+  const apply = () => {
+    const newStatus = dropdown.value;
+    indexes.forEach(i => leads[i].status = newStatus);
+    saveAllToStorage();
+    updateActiveContactList();
+    renderReport();
+    liveBulkSearch();
+    alert(`${indexes.length} Leads auf Status "${newStatus}" gesetzt.`);
+    document.body.removeChild(overlay);
+  };
+
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.background = "rgba(0,0,0,0.5)";
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  overlay.style.zIndex = "9999";
+
+  const modal = document.createElement("div");
+  modal.style.background = "white";
+  modal.style.padding = "20px";
+  modal.style.borderRadius = "12px";
+  modal.style.width = "400px";
+  modal.innerHTML = wrapper.innerHTML;
+  modal.appendChild(dropdown);
+
+  const buttonRow = document.createElement("div");
+  buttonRow.style.display = "flex";
+  buttonRow.style.justifyContent = "flex-end";
+  buttonRow.style.gap = "10px";
+  buttonRow.style.marginTop = "20px";
+
+  const okBtn = document.createElement("button");
+  okBtn.textContent = "Übernehmen";
+  okBtn.className = "button";
+  okBtn.onclick = apply;
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Abbrechen";
+  cancelBtn.className = "button";
+  cancelBtn.onclick = () => document.body.removeChild(overlay);
+
+  buttonRow.appendChild(okBtn);
+  buttonRow.appendChild(cancelBtn);
+  modal.appendChild(buttonRow);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+// Globale Klicküberwachung, um Dropdown zu schließen, wenn man außerhalb klickt
+document.addEventListener("click", function(e) {
+  const menu = document.getElementById("actionMenu");
+  if (menu && !e.target.closest(".dropdown")) {
+    menu.style.display = "none";
+  }
+});
+
+
+function enableInlineEditing() {
+  document.querySelectorAll("#leadFields .field-box div:not(.label)").forEach(box => {
+    box.ondblclick = function () {
+      const fieldName = this.previousElementSibling?.textContent?.trim();
+      if (!fieldName) return;
+
+      const currentValue = this.textContent.trim();
+      const input = document.createElement("input");
+      input.value = currentValue;
+      input.style.width = "100%";
+
+      input.onblur = function () {
+        const newValue = input.value;
+        this.parentElement.innerHTML = `
+          <div class="label">${fieldName}</div>
+          <div>${newValue}</div>
+        `;
+        const lead = leads[currentIndex];
+        if (lead && fieldName in lead) {
+          lead[fieldName] = newValue;
+          saveAllToStorage();
+          updateActiveContactList();
+        }
+        enableInlineEditing(); // wieder aktivieren
+      };
+
+      this.parentElement.innerHTML = `
+        <div class="label">${fieldName}</div>
+      `;
+      this.parentElement.appendChild(input);
+      input.focus();
+    };
+  });
+}
+
+function gotoLead(index) {
+  if (index >= 0 && index < leads.length) {
+    currentIndex = index;
+    localStorage.setItem("currentIndex", index.toString());
+    renderLead();
+    renderLeadPreview();
+    closeSearchPopup();
+  } else {
+    alert("Lead nicht gefunden.");
+  }
+}
+
+
+function toggleListActivation(index) {
+  contactLists[index].active = !contactLists[index].active;
+
+  // Wenn aktiviert → zu leads hinzufügen
+  if (contactLists[index].active) {
+    leads = [...leads, ...contactLists[index].leads];
+  } else {
+    // Wenn deaktiviert → aus leads entfernen
+    const idsToRemove = contactLists[index].leads.map(l => JSON.stringify(l));
+    leads = leads.filter(l => !idsToRemove.includes(JSON.stringify(l)));
+  }
+
+  saveAllToStorage();
+  saveContactLists();
+  renderReport();
+  renderLead();
+  openContactListManager(); // Ansicht aktualisieren
+}
+
+
+function makeEditable(box, field) {
+  const value = leads[currentIndex]?.[field] || "";
+  box.innerHTML = `
+    <label class="label">${field}</label>
+    <input type="text" value="${value}" 
+      onblur="saveInlineEdit(this, '${field}')" 
+      style="width: 100%; padding: 6px; margin-top: 4px;">
+  `;
+  box.querySelector("input").focus();
+}
+
+function saveInlineEdit(input, field) {
+  const value = input.value;
+  if (!leads[currentIndex]) return;
+  leads[currentIndex][field] = value;
+  saveAllToStorage();
+  updateActiveContactList();
+  renderLead(); // neu rendern, damit Feld wieder in "Textmodus" geht
+}
+
+function saveNewLead() {
+  const inputs = document.querySelectorAll("#newLeadModal input, #newLeadModal textarea");
+  const newLead = {};
+
+  let valid = true;
+
+  inputs.forEach(input => {
+    const field = input.dataset.field;
+    const value = input.value.trim();
+
+    if (!field) return;
+
+    // ✅ Nur Nachname und Telefonnummer prüfen
+    if ((field === "Nachname" || field === "Telefon Eigentümer") && value === "") {
+      valid = false;
+      input.style.border = "1px solid red";
+    } else {
+      input.style.border = "";
+      newLead[field] = value;
+    }
+  });
+
+  if (!valid) {
+    alert("Bitte gib mindestens Nachname und Telefonnummer an.");
+    return;
+  }
+
+  newLead.status = newLead.status || "Neu";
+  newLead.createdAt = new Date().toISOString();
+
+  // ⬇️ Direkt in globale Liste einfügen
+  leads.push(newLead);
+  currentIndex = leads.length - 1;
+
+  // ⬇️ In "Inbound"-Liste speichern
+  const inboundList = contactLists.find(l => l.name === "Inbound");
+  if (inboundList) {
+    inboundList.leads.push(newLead);
+    localStorage.setItem("activeListId", inboundList.id);
+  }
+
+  saveAllToStorage();
+  saveContactLists();
+  renderLead();
+  renderReport();
+  renderFieldVisibilitySettings();
+  renderLeadPreview();
+
+  document.getElementById("newLeadModal").style.display = "none";
+  inputs.forEach(input => input.value = "");
+}
+
+function clearLeadsFromList(index) {
+  if (!confirm(`❗ Alle Leads aus "${contactLists[index].name}" wirklich löschen?`)) return;
+
+  contactLists[index].leads = [];
+  saveContactLists();
+
+  // Falls die Liste aktiv war: globale leads updaten
+  if (contactLists[index].active) {
+    leads = leads.filter(lead => {
+      return !contactLists[index].leads.includes(lead);
+    });
+    saveAllToStorage();
+    renderLead();
+    renderReport();
+  }
+
+  openContactListManager(); // Ansicht aktualisieren
+}
+
+function toggleContactActionDropdown(index) {
+  // Schließe alle offenen Dropdowns
+  document.querySelectorAll('.dropdown-content').forEach(el => el.style.display = 'none');
+  
+  const target = document.getElementById(`contactActionDropdown-${index}`);
+  if (target) {
+    target.style.display = target.style.display === 'block' ? 'none' : 'block';
+  }
+}
+
+document.addEventListener("click", function(e) {
+  if (!e.target.closest(".dropdown")) {
+    document.querySelectorAll(".dropdown-content").forEach(el => el.style.display = "none");
+  }
+});
+
+
+function toggleActionDropdown(index) {
+  document.querySelectorAll('.dropdown-content').forEach(el => el.style.display = 'none');
+  const menu = document.getElementById(`dropdown-${index}`);
+  if (menu) {
+    menu.style.display = 'block';
+  }
+}
+
+function toggleMute() {
+  const muteButton = document.getElementById("muteButton");
+  if (muteButton.textContent.includes("🎙️")) {
+    muteButton.textContent = "🔇";
+    muteButton.style.backgroundColor = "#ccc"; // grau bei Mute
+  } else {
+    muteButton.textContent = "🎙️";
+    muteButton.style.backgroundColor = "#8c1aff"; // lila bei Aktiv
+  }
+}
+
+function hangUp() {
+stopCallTimer();
+
+  const notification = document.createElement("div");
+  notification.innerText = "Anruf beendet.";
+  notification.style.position = "fixed";
+  notification.style.bottom = "20px";
+  notification.style.right = "20px";
+  notification.style.backgroundColor = "#8c1aff";
+  notification.style.color = "white";
+  notification.style.padding = "10px 20px";
+  notification.style.borderRadius = "8px";
+  notification.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+  notification.style.zIndex = 10000;
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    document.body.removeChild(notification);
+  }, 2000);
+}
+
+
+let callStartTime = null;
+let callTimerInterval = null;
+
+function startCallTimer() {
+  callStartTime = Date.now();
+  callTimerInterval = setInterval(updateCallTimer, 1000);
+}
+
+function updateCallTimer() {
+  const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+  const minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const seconds = String(elapsed % 60).padStart(2, '0');
+  document.getElementById("callDuration").textContent = `${minutes}:${seconds}`;
+}
+
+function stopCallTimer() {
+  clearInterval(callTimerInterval);
+  callTimerInterval = null;
+  callStartTime = null;
+  document.getElementById("callDuration").textContent = "00:00";
+}
+
+
+
+let phoneNumbers = [
+  { label: "Eigentümer", number: "" },
+  { label: "Büro", number: "" },
+  { label: "Mobil", number: "" }
+];
+let selectedPhoneIndex = 0;
+
+function fillPhoneNumbersFromLead(lead) {
+  phoneNumbers = [
+    { label: "Eigentümer", number: lead["Telefon Eigentümer"] || "" },
+    { label: "Büro", number: lead["Telefon Büro"] || "" },
+    { label: "Mobil", number: lead["Mobilnummer"] || "" }
+  ];
+  renderPhoneNumbers();
+}
+
+function renderPhoneNumbers() {
+  const dropdown = document.getElementById("phoneDropdown");
+  dropdown.innerHTML = "";
+
+  const icons = ["fa-user", "fa-building", "fa-mobile-alt"];
+
+  phoneNumbers.forEach((entry, index) => {
+    const div = document.createElement("div");
+    div.classList.add("dropdown-entry");
+    div.style.padding = "10px 12px";
+    div.style.cursor = "pointer";
+    div.style.display = "flex";
+    div.style.alignItems = "center";
+    div.style.justifyContent = "space-between";
+    div.style.gap = "8px";
+
+    const left = document.createElement("div");
+    left.style.display = "flex";
+    left.style.alignItems = "center";
+    left.style.gap = "8px";
+
+    const icon = document.createElement("i");
+    icon.className = `fas ${icons[index]}`;
+    icon.style.width = "20px";
+
+    const content = document.createElement("div"); // NICHT <span>
+content.textContent = entry.number || "Nummer bearbeiten...";
+
+content.style.flex = "1";
+if (!entry.number) content.style.color = "#888";
+content.onclick = function (e) {
+  e.stopPropagation();
+  editPhoneNumberFieldInline(content, index);
+};
+
+// 🟢 Neu: Container direkt übergeben!
+content.ondblclick = function (e) {
+  e.stopPropagation();
+  editPhoneNumberField(content, index);
+};
+
+    left.appendChild(icon);
+    left.appendChild(content);
+
+    const editButton = document.createElement("button");
+    editButton.innerHTML = "✏️";
+    editButton.style.border = "none";
+    editButton.style.background = "transparent";
+    editButton.style.cursor = "pointer";
+    editButton.onclick = function (e) {
+      e.stopPropagation();
+      editPhoneNumberField(content, index);
+    };
+
+    div.onclick = function () {
+      selectedPhoneIndex = index;
+      document.getElementById("selectedNumberButton").textContent = phoneNumbers[index].number || "Nummer wählen...";
+      dropdown.style.display = "none";
+    };
+
+    div.appendChild(left);
+    div.appendChild(editButton);
+    dropdown.appendChild(div);
+  });
+
+  const selected = phoneNumbers[selectedPhoneIndex];
+  document.getElementById("selectedNumberButton").textContent = selected.number || "Nummer wählen...";
+}
+
+function editPhoneNumberField(container, index) {
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = phoneNumbers[index].number;
+  input.style.width = "100%";
+  input.style.padding = "6px";
+
+  input.onblur = function () {
+    phoneNumbers[index].number = input.value.trim();
+    renderPhoneNumbers(); // neu aufbauen
+  };
+
+  container.innerHTML = ""; // Inhalt leeren
+  container.appendChild(input);
+  input.focus();
+}
+ 
+function editPhoneNumber(index) {
+  const newNumber = prompt(`Neue Nummer für ${phoneNumbers[index].label}:`, phoneNumbers[index].number);
+  if (newNumber !== null) {
+    phoneNumbers[index].number = newNumber.trim();
+    renderPhoneNumbers();
+  }
+}
+
+document.addEventListener("click", (e) => {
+  const dropdown = document.getElementById("phoneDropdown");
+  const trigger = document.getElementById("selectedNumberButton");
+  if (trigger.contains(e.target)) {
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  } else if (!dropdown.contains(e.target)) {
+    dropdown.style.display = "none";
+  }
+});
+
+function callSelectedNumber() {
+startCallTimer();
+
+  const selected = phoneNumbers[selectedPhoneIndex];
+  if (selected.number && selected.number.trim() !== "") {
+    window.location.href = `tel:${selected.number}`;
+  } else {
+    alert("❌ Bitte gültige Telefonnummer auswählen oder eintragen.");
+  }
+}
+
+
+function renderPhoneDropdown() {
+  const dropdown = document.getElementById("phoneDropdownMenu");
+  dropdown.innerHTML = "";
+
+  const icons = ["fa-user", "fa-building", "fa-mobile-alt"];
+  const labels = ["Eigentümer", "Büro", "Mobil"];
+
+  phoneNumbers.forEach((number, i) => {
+    const entry = document.createElement("div");
+    entry.style.padding = "10px 12px";
+    entry.style.cursor = "pointer";
+    entry.style.borderBottom = i < 2 ? "1px solid #eee" : "";
+    entry.style.display = "flex";
+    entry.style.alignItems = "center";
+    entry.style.gap = "8px";
+
+    const icon = document.createElement("i");
+    icon.className = `fas ${icons[i]}`;
+    icon.style.width = "20px";
+
+    const label = document.createElement("strong");
+    label.appendChild(icon);
+
+    const content = document.createElement("span");
+    content.textContent = number || "Nummer bearbeiten...";
+    content.style.flex = "1";
+
+    if (!number) content.style.color = "#888";
+
+    // 🟡 Doppelklick = Editieren
+    content.ondblclick = function () {
+      const input = document.createElement("input");
+      input.value = phoneNumbers[i];
+      input.style.width = "100%";
+      input.onblur = function () {
+        phoneNumbers[i] = input.value.trim();
+        renderPhoneDropdown(); // neu rendern
+      };
+      entry.replaceChild(input, content);
+      input.focus();
+    };
+
+    entry.appendChild(label);
+    entry.appendChild(content);
+    dropdown.appendChild(entry);
+  });
+
+
+  dropdown.value = selectedPhoneIndex;
+}
+
+function selectPhoneNumberDropdown(select) {
+  selectedPhoneIndex = parseInt(select.value);
+}
+
+
+function editPhoneNumberFieldInline(div, index) {
+  const input = document.createElement("input");
+  input.value = phoneNumbers[index].number || "";
+  input.style.width = "100%";
+  input.onblur = function () {
+    phoneNumbers[index].number = input.value.trim();
+    renderPhoneNumbers(); // neu rendern
+  };
+  div.replaceWith(input);
+  input.focus();
+}
+
+let seconds = 0;
+let timerInterval;
+
+function startTimer() {
+  seconds = 0;
+  timerInterval = setInterval(() => {
+    seconds++;
+    const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const sec = String(seconds % 60).padStart(2, '0');
+    document.getElementById("timerDisplay").textContent = `${min}:${sec}`;
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+}
+
+
+
+</script>
+
+<script src="sipclient.js"></script>
+
+</body>
+</html>
